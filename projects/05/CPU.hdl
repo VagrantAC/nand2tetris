@@ -33,4 +33,57 @@ CHIP CPU {
 
     PARTS:
     //// Replace this comment with your code.
+    // 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+    //  i  x  x  a  c  c c c c c d d d j j j
+    Not(in=instruction[15], out=isA);
+    Not(in=isA, out=isC);
+
+    // C指令d1使用ARegister
+    And(a=isC, b=instruction[5], out=isLoadALU);
+    Mux16(a=instruction, b=outALU, sel=isLoadALU, out=inARegister);
+    
+    // 更改ARegister值
+    Or(a=isLoadALU, b=isA, out=loadAR);
+    ARegister(in=inARegister, load=loadAR, out=outARegister, out[0..14]=addressM);
+
+    // a位判断使用ARegister还是默认值
+    Mux16(a=outARegister, b=inM, sel=instruction[12], out=outAM);
+
+    // C指令d3使用Memory
+    And(a=isC, b=instruction[3], out=writeM);
+
+    // C指令d2使用DRegister
+    And(a=isC, b=instruction[4], out=loadDR);
+    DRegister(in=outALU, load=loadDR, out=outDR);
+
+    // C指令的c用于ALU
+    And(a=isC, b=instruction[11], out=zx);
+    And(a=isC, b=instruction[10], out=nx);
+    And(a=isC, b=instruction[9], out=zy);
+    And(a=isC, b=instruction[8], out=ny);
+    And(a=isC, b=instruction[7], out=f);
+    And(a=isC, b=instruction[6], out=no);
+    ALU(x=outDR, y=outAM, zx=zx, nx=nx, zy=zy, ny=ny, f=f, no=no, out=outALU, out=outM, zr=outZR, ng=outNG);
+
+    // C指令的j用于跳转
+    And(a=isC, b=instruction[0], out=isGT);
+    And(a=isC, b=instruction[1], out=isEQ);
+    And(a=isC, b=instruction[2], out=isLT);
+
+
+    //// 判断是否需要跳转
+    Not(in=outNG, out=notNg);
+    Not(in=outZR, out=notZR);
+    And(a=notNg, b=notZR, out=isOutGT);
+
+    And(a=outNG, b=isLT, out=isLTJump);
+    And(a=outZR, b=isEQ, out=isEQJump);
+    And(a=isOutGT, b=isGT, out=isGTJump);
+
+    Or(a=isLTJump, b=isEQJump, out=isJump);
+    Or(a=isJump, b=isGTJump, out=jump);
+
+
+    // 需要跳转 --> 转到ARegister, 不需要 --> pc++
+    PC(in=outARegister, load=jump, inc=true, reset=reset, out[0..14]=pc);
 }
