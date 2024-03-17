@@ -279,8 +279,8 @@ class CodeWriter {
         val lists = mutableListOf<String>()
         while (parser.hasMoreCommands()) {
             when (parser.commandType()) {
-                CommandType.C_PUSH -> lists.addAll(processPush(parser.arg1(), parser.arg2(), filename))
-                CommandType.C_POP -> lists.addAll(proceessPop(parser.arg1(), parser.arg2(), filename))
+                CommandType.C_PUSH -> lists.addAll(processPush(parser.arg1(), parser.arg2(), "FILENAME"))
+                CommandType.C_POP -> lists.addAll(proceessPop(parser.arg1(), parser.arg2(), "FILENAME"))
                 CommandType.C_LABEL -> TODO()
                 CommandType.C_GOTO -> TODO()
                 CommandType.C_IF -> TODO()
